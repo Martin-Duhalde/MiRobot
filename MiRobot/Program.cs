@@ -1,5 +1,7 @@
 ﻿using MiRobot;
 
+using Microsoft.OpenApi;
+
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -27,7 +29,24 @@ if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Length < 32)
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Autorizacion para usar la api con swagger
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "API Key",
+        Description = "Ingresá tu API Key."
+    });
+
+    options.AddSecurityRequirement(document =>
+        new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+        });
+});
 
 // Error handling
 builder.Services.AddProblemDetails();
@@ -90,8 +109,16 @@ if (!omitirApiKey) // para pruebas en desarrollo sin Api Key
     // header X-Api-Key y rechaza con 401 Unauthorized si no es válida.
     robotApi.AddEndpointFilter(async (context, next) =>
         {
-            var suppliedKey = context.HttpContext
-                .Request.Headers["X-Api-Key"].ToString();
+            var authorization = context.HttpContext
+                .Request.Headers.Authorization.ToString();
+
+            var suppliedKey = authorization.StartsWith(
+                "Bearer ", StringComparison.OrdinalIgnoreCase)
+                    ? authorization["Bearer ".Length..].Trim()
+                    : string.Empty;
+
+            //var suppliedKey = context.HttpContext
+            //    .Request.Headers["X-Api-Key"].ToString();
 
             var expected = Encoding.UTF8.GetBytes(apiKey);
             var supplied = Encoding.UTF8.GetBytes(suppliedKey);
