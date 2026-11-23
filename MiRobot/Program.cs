@@ -117,9 +117,6 @@ if (!omitirApiKey) // para pruebas en desarrollo sin Api Key
                     ? authorization["Bearer ".Length..].Trim()
                     : string.Empty;
 
-            //var suppliedKey = context.HttpContext
-            //    .Request.Headers["X-Api-Key"].ToString();
-
             var expected = Encoding.UTF8.GetBytes(apiKey);
             var supplied = Encoding.UTF8.GetBytes(suppliedKey);
 
