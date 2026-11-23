@@ -1,66 +1,58 @@
-# Visual Studio / IDE
+# ==========================================
+# MiRobot - .NET / Visual Studio / VS Code
+# ==========================================
+
+# Visual Studio
 .vs/
-.vscode/
-.idea/
-*.user
 *.suo
+*.user
+*.userosscache
 *.sln.docstates
 
-# Build / publish
-**/bin/
-**/obj/
-out/
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
 publish/
-TestResults/
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
 coverage/
-*.pdb
-*.cache
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# Logs
 *.log
 
-# Web
-node_modules/
-Apps/Kaivalya.Web/dist/
-dist-ssr/
-
-# Local assets (no versionar)
-Assets-local/
-
-# Local config / secrets
-appsettings.Development.json
-appsettings.Local.json
-secrets.json
-
-# Env files
+# Local configuration and secrets
 .env
-**/.env
-.env.local
-.env.* 
+.env.*
 !.env.example
+*.local.json
 
-# OS cruft
+# Certificates and private keys
+*.pfx
+*.p12
+*.key
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+# Operating system
 .DS_Store
 Thumbs.db
 Desktop.ini
 
-# Azure local tooling
-.azure/
-
-# Docker local overrides
-*.local.yml
-*.override.local.yml
-
-# Temporary / backups
-*.swp
-*.bak
+# Temporary files
 *.tmp
-
-# SQLite local db
-*.db
-*.db-shm
-*.db-wal
-
-# Obsidian
-.obsidian/
-
-# Registro local de costos (no versionar: es dato de la instalacion, no del repo)
-docs/producto/costos-historial.local.md
+*.bak
+*~
