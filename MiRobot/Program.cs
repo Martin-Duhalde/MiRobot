@@ -1,5 +1,7 @@
 ﻿using MiRobot;
 
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.RateLimiting;
 
 //// Estado simulado del robot
@@ -13,13 +15,14 @@ Robot robot = new(id: 1, name: "Robot-T800");
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration
-var apiKey = builder.Configuration["MiRobot:ApiKey"];
+var apiKey       /**/ = builder.Configuration["MiRobot:ApiKey"];
+var omitirApiKey /**/ = builder.Configuration.GetValue<bool>("MiRobot:OmitirApiKey");
 
 if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Length < 32)
 {
     /// Para pruebas locales en desarrollo escribir esto en powershell:
     ///   [Environment]::SetEnvironmentVariable("MiRobot__ApiKey", "RobotDemo-2026-MiClave-Segura-123456789", "User")
-    throw new InvalidOperationException("Security:ApiKey must contain at least 32 characters.");
+    throw new InvalidOperationException("MiRobot:ApiKey must contain at least 32 characters.");
 }
 
 // Swagger
@@ -69,6 +72,41 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapGet("/health", () => Results.Ok(new
+{
+    Status = "Healthy"
+}));
+
+#endregion
+
+#region robotApi 
+
+var robotApi = app.MapGroup("/Robot");
+
+if (!omitirApiKey) // para pruebas en desarrollo sin Api Key 
+{
+    // Endpoint Filter: intercepta todas las solicitudes del grupo /Robot
+    // antes de ejecutar el endpoint. Valida la API Key enviada en el
+    // header X-Api-Key y rechaza con 401 Unauthorized si no es válida.
+    robotApi.AddEndpointFilter(async (context, next) =>
+        {
+            var suppliedKey = context.HttpContext
+                .Request.Headers["X-Api-Key"].ToString();
+
+            var expected = Encoding.UTF8.GetBytes(apiKey);
+            var supplied = Encoding.UTF8.GetBytes(suppliedKey);
+
+            var valid = supplied.Length == expected.Length &&
+                CryptographicOperations.FixedTimeEquals(
+                    supplied, expected);
+
+            if (!valid)
+                return Results.Unauthorized();
+
+            return await next(context);
+        });
+}
+
 #endregion
 
 #region Web
@@ -92,7 +130,7 @@ app.MapGet("/", () => Results.Content("""
             <li><a href="/Robot/Posicion">Posición</a></li>
             <li><a href="/Robot/Estado">Estado</a></li>
         </ul>
-
+        
         <h3>Documentación</h3>
         <a href="/swagger" role="button">Abrir Swagger UI</a>
     </main>
@@ -105,7 +143,7 @@ app.MapGet("/", () => Results.Content("""
 #region Api
 
 // Robot
-app.MapGet("/Robot", () => Results.Ok(new
+robotApi.MapGet("/", () => Results.Ok(new
 {
     robot.Id,
     robot.Name,
@@ -115,11 +153,14 @@ app.MapGet("/Robot", () => Results.Ok(new
 }));
 
 // Posición actual
-app.MapGet("/Robot/Posicion", () => Results.Ok(robot.Position));
+robotApi.MapGet("/Posicion", () => Results.Ok(robot.Position));
 
 // Mover un eje o los tres
-app.MapPost("/Robot/Posicion", (Position request) =>
+robotApi.MapPost("/Posicion", (Position request) =>
 {
+    if (!request.IsValid())
+        return Results.BadRequest("Posición inválida.");
+
     robot.Position = request;
     robot.Status = "Moved";
 
@@ -131,7 +172,7 @@ app.MapPost("/Robot/Posicion", (Position request) =>
 });
 
 // Estado
-app.MapGet("/Robot/Estado", () => Results.Ok(new
+robotApi.MapGet("/Estado", () => Results.Ok(new
 {
     robot.Status,
     IsMoving = false,
@@ -140,7 +181,7 @@ app.MapGet("/Robot/Estado", () => Results.Ok(new
 }));
 
 // Home: volver al origen
-app.MapPost("/Robot/Home", () =>
+robotApi.MapPost("/Home", () =>
 {
     robot.Position = new Position(0, 0, 0);
 
