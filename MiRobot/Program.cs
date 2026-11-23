@@ -102,7 +102,7 @@ app.MapGet("/health", () => Results.Ok(new
 
 var robotApi = app.MapGroup("/Robot");
 
-if (!omitirApiKey) // para pruebas en desarrollo sin Api Key 
+if (!omitirApiKey && !app.Environment.IsDevelopment()) // para pruebas en desarrollo sin Api Key 
 {
     // Endpoint Filter: intercepta todas las solicitudes del grupo /Robot
     // antes de ejecutar el endpoint. Valida la API Key enviada en el
