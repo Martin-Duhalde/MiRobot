@@ -1,23 +1,77 @@
-﻿// Estado simulado del robot
-var robot = new
-{
-    Id = 1,
-    Name = "Robot-T800"
-};
-var posicion = new Position(0, 0, 0);
-var status = "Active";
+﻿using MiRobot;
 
+using System.Threading.RateLimiting;
 
-// Minimal API 
+//// Estado simulado del robot
+
+Robot robot = new(id: 1, name: "Robot-T800");
+
+//// Minimal API 
+
+#region builder
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configuration
+var apiKey = builder.Configuration["MiRobot:ApiKey"];
+
+if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Length < 32)
+{
+    /// Para pruebas locales en desarrollo escribir esto en powershell:
+    ///   [Environment]::SetEnvironmentVariable("MiRobot__ApiKey", "RobotDemo-2026-MiClave-Segura-123456789", "User")
+    throw new InvalidOperationException("Security:ApiKey must contain at least 32 characters.");
+}
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Error handling
+builder.Services.AddProblemDetails();
+
+// Rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.GlobalLimiter = PartitionedRateLimiter
+        .Create<HttpContext, string>(context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 60,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0
+                }));
+});
+
+#endregion
+
+#region app
+
 var app = builder.Build();
 
+// Production middleware
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler();
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseRateLimiter();
+
+// Swagger only in development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+#endregion
+
+#region Web
 
 app.MapGet("/", () => Results.Content("""
 <!DOCTYPE html>
@@ -46,36 +100,40 @@ app.MapGet("/", () => Results.Content("""
 </html>
 """, "text/html; charset=utf-8"));
 
+#endregion
+
+#region Api
 
 // Robot
 app.MapGet("/Robot", () => Results.Ok(new
 {
     robot.Id,
     robot.Name,
-    Status = status,
+    robot.Status,
     Axes = 3,
     Message = "Robot ready"
 }));
 
 // Posición actual
-app.MapGet("/Robot/Posicion", () => Results.Ok(posicion));
+app.MapGet("/Robot/Posicion", () => Results.Ok(robot.Position));
 
 // Mover un eje o los tres
 app.MapPost("/Robot/Posicion", (Position request) =>
 {
-    posicion = request;
+    robot.Position = request;
+    robot.Status = "Moved";
 
     return Results.Ok(new
     {
-        Status = "Moved",
-        Position = posicion
+        robot.Status,
+        robot.Position
     });
 });
 
 // Estado
 app.MapGet("/Robot/Estado", () => Results.Ok(new
 {
-    Status = status,
+    robot.Status,
     IsMoving = false,
     Temperature = 35.5,
     Battery = 98
@@ -84,18 +142,15 @@ app.MapGet("/Robot/Estado", () => Results.Ok(new
 // Home: volver al origen
 app.MapPost("/Robot/Home", () =>
 {
-    posicion = new Position(0, 0, 0);
+    robot.Position = new Position(0, 0, 0);
 
     return Results.Ok(new
     {
         Status = "Homed",
-        Position = posicion
+        robot.Position
     });
 });
 
-app.UseSwagger();
-app.UseSwaggerUI();
-app.Run();
+#endregion
 
-// Modelo de posición
-record Position(double X, double Y, double Z);
+app.Run();
