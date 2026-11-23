@@ -1,0 +1,66 @@
+# Visual Studio / IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln.docstates
+
+# Build / publish
+**/bin/
+**/obj/
+out/
+publish/
+TestResults/
+coverage/
+*.pdb
+*.cache
+*.log
+
+# Web
+node_modules/
+Apps/Kaivalya.Web/dist/
+dist-ssr/
+
+# Local assets (no versionar)
+Assets-local/
+
+# Local config / secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Env files
+.env
+**/.env
+.env.local
+.env.* 
+!.env.example
+
+# OS cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Azure local tooling
+.azure/
+
+# Docker local overrides
+*.local.yml
+*.override.local.yml
+
+# Temporary / backups
+*.swp
+*.bak
+*.tmp
+
+# SQLite local db
+*.db
+*.db-shm
+*.db-wal
+
+# Obsidian
+.obsidian/
+
+# Registro local de costos (no versionar: es dato de la instalacion, no del repo)
+docs/producto/costos-historial.local.md
