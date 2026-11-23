@@ -49,12 +49,12 @@ La clave se configura localmente y no debe publicarse en el repositorio.
 
 ## Tutoriales
 
-Este proyecto acompaña una serie de videos donde se construye y evoluciona la API paso a paso:
+Este proyecto acompaña una serie de videos donde se construye y evoluciona la API paso a paso.
 
-1. **Parte 1:** creación de una API con .NET 10 Minimal API.
-2. **Parte 2:** seguridad, autenticación con API Key y Rate Limiting.
-3. **Parte 3:** Git y control de versiones desde Visual Studio.
-4. **Parte 4:** GitHub, clonado de repositorios y sincronización de cambios.
+1. **[Parte 1 – Creación de una API con .NET 10 Minimal API](https://www.youtube.com/watch?v=wj29GvhJ6oE&t=1021s)**
+2. **[Parte 2 – Seguridad, API Key y Rate Limiting](https://www.youtube.com/watch?v=5nbVbyIiVyU&t=1316s)**
+3. **[Parte 3 – Git y control de versiones desde Visual Studio](https://www.youtube.com/watch?v=IyswEc1DJVY)**
+4. **[Parte 4 – GitHub, clonado de repositorios y sincronización de cambios](https://www.youtube.com/watch?v=BNMbZ_1z3w4&t=316s)**
 
 ## Tecnologías
 
